@@ -57,13 +57,14 @@
                         from FOSS4G Seoul 2015
 
                         Note:
-                        Once again my name is Steve Lander, and I have been in the
+                        My name is Steve Lander, and I have been in the
                         geospatial domain for going on 7 years now in various
                         roles, most recently as a project technical lead and
                         architect.  Applied research is a good way of
                         describing the sorts of projects I have been working on
                         recently, for example, API development for tile
-                        caching and storage.
+                        caching and storage. I also happen to dabble in the
+                        dart art of GDAL command line utilities.
                         ---
                         ### Outline
 
@@ -85,21 +86,156 @@
                 <section data-markdown data-separator="---" id="use_cases">
                     <textarea data-template>
                         ## Relevant use cases
+
+                        Note:
+                        From here on, I am going to assume Docker is your tool
+                        of choice for manipulating containers.  There are other
+                        options such as Vagrant, however, should you be
+                        interested in other offerings.
                         ---
                         ### A build environment
+
+                        Build your applications consistently and reliably
+
+                        ```Dockerfile
+                        # Start from this base linux image...
+                        FROM debian:8.9 # aka "jessie", but be specific!
+
+                        # Install this software to the container from a pkg manager
+                        RUN apt-get update -y &amp;&amp; apt-get install -y \
+                            curl \
+                            wget \
+                            openjdk-8
+
+                        # Customize my environment they way I need it
+                        ENV JAVA_HOME /usr/bin/java
+                        ```
+
+                        Note:
+                        * Containers work well as build environments.  You might
+                        not even be aware they were working if you have ever
+                        used TravisCI on an open source project.
+                        * Your Dockerfile is a recipe on how to make the same
+                        thing over and over exactly the same way, so it pays to
+                        ensure specific versions of software are used instead
+                        of the latest ones.  You wouldn't want updates to your
+                        base OS breaking your software unexpectedly!
                         ---
-                        #### Local builds
+                        ### A build environment (cont'd)
+
+                        Avoid polluting your desktop environment with
+                        dependencies you don't need outside of your development
+                        environment
+
+                        ```Dockerfile
+                        FROM debian:8.9
+
+                        # Move to a new folder to work in, creating it if necessary
+                        WORKDIR /workspace
+
+                        # I install so many packages, it isn't worth listing them all
+                        COPY install_packages.sh install_packages.sh
+                        RUN /bin/bash install_packages.sh
+
+                        # Build GDAL from scratch (let's say I need MrSID)...
+                        COPY gdal_build_script_of_doom.sh gdal_build_script_of_doom.sh
+                        RUN /bin/bash gdal_build_script_of_doom.sh
+                        ```
+
+                        Note:
+                        Maybe your program needs tons of python libraries that
+                        you would not otherwise use on other projects.  Perhaps
+                        you build a library like GDAL from source to get
+                        additional driver support not otherwise provided due to
+                        licensing restrictions along with some SWIG bindings to
+                        other languages. In either of these cases the computer
+                        you rely on to do your job stays neat and tidy, and
+                        when you don't need the dependencies, simply delete
+                        your container.
                         ---
-                        #### Continous integration 
+                        ### A build environment (cont'd)
+
+                        Reduce the time it takes for other people to build,
+                        run, test, and contribute to your project
+
+                        ```Dockerfile
+                        # A Docker container with my code
+                        FROM debian:8.9
+
+                        WORKDIR /workspace
+                        RUN git clone https://github.com/stevendlander/foss4g2017 \
+                            &amp;&amp; cd foss4g2017
+
+                        COPY helperScript.sh helperScript.sh
+
+                        EXPOSE 8080 # My web service port
+                        EXPOSE 8000 # Debugging port
+                        ENV JPDA_ADDRESS 8000
+                        ENV JPDA_TRANSPORT dt_socket
+                        ```
+
+                        Note:
+                        Create a container for other developers to be dropped
+                        into a command prompt, ready to start debugging from
+                        their IDE over HTTP.  If you ever have had to spend
+                        days getting your environment configured, I hope you
+                        can appreciate how much time and frustration this can
+                        save you.
+                        ---
+                        ### Local builds
+
+                        Just use a simple container to build your code and
+                        artifacts
+
+                        ```bash
+                        docker run --rm \
+                            -v /your/code:/workspace \
+                            --entrypoint cd /workspace &amp;&amp; mvn build \
+                            maven:3.5-jdk-7
+                        ```
+                        Note:
+                        This example will mount your code directory to the
+                        Docker container workspace folder, then run a maven
+                        build command within it.  Once it is done, the
+                        container will be cleaned up.  Since you mounted your
+                        code directory to the container, all the files it
+                        created during your build will stick around on YOUR
+                        file system.
+                        ---
+                        ### Continuous integration 
+
+                        * Create a build-ready container with static analysis
+                        tools, security scan tools, code coverage libraries
+                        * Save the container with a friendly name
+                        (_my_java_app:1.0_) and publish it to
+                        [DockerHub](https://hub.docker.com)
+                        ---
+                        ### Continuous integration (cont'd :D)
+
+                        Source that container into your .gitlab-ci.yml file
+
+                        ```yaml
+                        test:my_test_phase:
+                            image: my_java_app:1.0
+                            script:
+                                - ./gradlew build
+                                - ./gradlew javadocs
+                        ```
+
+                        Note:
+                        Use your new container to automate how you build your
+                        application in the future. Future container versions
+                        (maybe you forgot a library?) can be updated by
+                        changing to 1.0 to a 1.1.
                         ---
                         ### A work environment
-                        ---
-                        #### Always up-to-date GDAL environment
                     </textarea>
                 </section>
                 <section data-markdown data-separator="---" id="creation">
                     <textarea data-template>
                         ### Container creation
+                        ---
+                        ### 
                     </textarea>
                 </section>
                 <section data-markdown data-separator="---" id="advanced">
@@ -119,6 +255,12 @@
                         * Passing credentials as environment variables is
                         convenient but insecure, and solutions are complicated
                         to implement
+                        Dockerfiles can and do get crazy if your build is
+                        equally crazy.  Some people prefer having one
+                        monolithic Dockerfile with no dependent scripts, which
+                        is completely understandable.  Others would rather a
+                        brief Dockerfile that pushes the heavy lifting to a
+                        shell script that gets maintained instead.
                     </textarea>
                 </section>
             </div>
