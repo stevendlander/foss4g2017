@@ -64,7 +64,7 @@
                         describing the sorts of projects I have been working on
                         recently, for example, API development for tile
                         caching and storage. I also happen to dabble in the
-                        dart art of GDAL command line utilities.
+                        dark art of GDAL command line utilities.
                         ---
                         ### Outline
 
@@ -85,7 +85,28 @@
                 </section>
                 <section data-markdown data-separator="---" id="use_cases">
                     <textarea data-template>
-                        ## Relevant use cases
+                        ### What is a container?
+
+                        The delta between the files on your system and another
+                        file system running in a separate space.
+
+                        Note:
+                        Through file permissions, SELinux, and I am sure many
+                        other methods, containers exist as separate
+                        filesystems that use as much of your base operating
+                        system as possible.
+                        ---
+                        ### Container vs. VM
+
+                        A VM is a _copy_ of an entire computer _within_ your
+                        computer.  Efficiency is lost in this duplication.
+
+                        Note:
+                        Do you really need everything a VM brings with it?
+                        With VMs you end up paying for things you don't
+                        necessarily need.
+                        ---
+                        ### Relevant use cases
 
                         Note:
                         From here on, I am going to assume Docker is your tool
@@ -293,7 +314,7 @@
 
                         * Use the FROM command to inherit from image that are
                         already useful, such as Tomcat, GDAL, PostGIS, etc
-                        * Stick to one "purpose" per container, so scaling
+                        * Stick to one purpose per container, so scaling
                         becomes easier.  More on that later...
                         * Treat your containers as ephemeral
 
