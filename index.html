@@ -180,19 +180,20 @@
                         their IDE over HTTP.  If you ever have had to spend
                         days getting your environment configured, I hope you
                         can appreciate how much time and frustration this can
-                        save you.
+                        save.
                         ---
                         ### Local builds
 
-                        Just use a simple container to build your code and
+                        Use a simple container to build your code and
                         artifacts
 
                         ```bash
                         docker run --rm \
                             -v /your/code:/workspace \
                             --entrypoint cd /workspace &amp;&amp; mvn build \
-                            maven:3.5-jdk-7
+                                maven:3.5-jdk-7
                         ```
+
                         Note:
                         This example will mount your code directory to the
                         Docker container workspace folder, then run a maven
@@ -207,8 +208,20 @@
                         * Create a build-ready container with static analysis
                         tools, security scan tools, code coverage libraries
                         * Save the container with a friendly name
-                        (_my_java_app:1.0_) and publish it to
-                        [DockerHub](https://hub.docker.com)
+                        ```bash
+                        docker commit <hash> my_java_app:1.0
+                        ```
+                        * Publish it to [DockerHub](https://hub.docker.com)
+                        ```bash
+                        docker push my_java_app:1.0
+                        ```
+
+                        Note:
+                        Load up a machine with everything you need to automate
+                        your project to give you as much information on its
+                        health as possible.  Save your machine and push it to
+                        either DockerHub or another repository of your
+                        choosing.
                         ---
                         ### Continuous integration (cont'd :D)
 
@@ -224,43 +237,170 @@
 
                         Note:
                         Use your new container to automate how you build your
-                        application in the future. Future container versions
-                        (maybe you forgot a library?) can be updated by
-                        changing to 1.0 to a 1.1.
-                        ---
-                        ### A work environment
+                        application in the future. If you forget something,
+                        container versions can be updated by changing to 1.0
+                        to a 1.1.
                     </textarea>
                 </section>
                 <section data-markdown data-separator="---" id="creation">
                     <textarea data-template>
                         ### Container creation
+
+                        Do this
+                        ```Dockerfile
+                        ...
+                        RUN git clone <repo> \
+                            &amp;&amp; cd <repo> \
+                            &amp;&amp; ./gradle assemble
+                        ...
+                        ```
+                        Not this
+                        ```Dockerfile
+                        ...
+                        RUN git clone <repo>
+                        RUN cd <repo>
+                        RUN ./gradlew assemble
+                        ...
+                        ```
+
+                        Note:
+                        Docker likes to make what it calls layers.  Layers can
+                        be rolled back if they fail to build so you don't have
+                        to start a long complicated build from scratch.  This
+                        sounds useful, and it is if you plan for it, but
+                        normally it just creates unnecessary bloat.
                         ---
-                        ### 
+                        ### Container creation (cont'd)
+
+                        Do this
+                        ```Dockerfile
+                        COPY filename.sh new_filename.sh
+                        ```
+                        Not this
+                        ```Dockerfile
+                        ADD filename.sh new_filename.sh
+                        ```
+
+                        Note:
+                        The ADD command can behave unexpectedly in some
+                        instances, when you probably just wanted to simply add
+                        a file to a container.  If that is your intent, use
+                        copy.  If you really did want local-only tarball
+                        extraction or remote URL support however, then by all
+                        means, ADD away.
+                        ---
+                        ### Container creation (cont'd)
+
+                        * Use the FROM command to inherit from image that are
+                        already useful, such as Tomcat, GDAL, PostGIS, etc
+                        * Stick to one "purpose" per container, so scaling
+                        becomes easier.  More on that later...
+                        * Treat your containers as ephemeral
+
+                        Note:
+                        Don't do extra work if you don't have to, right?  If
+                        you don't need a GDAL driver that you can only get by
+                        compiling from source, then just start with a known
+                        good GDAL container.  Keeping your container's purpose
+                        modest becomes very important when you start using them
+                        together, as we will talk about later.  Lastly, don't
+                        expect a new container to be able to pick up where you
+                        last left off with the last one.  Unless you mount a
+                        directory with state information, it won't work like
+                        you hope.
                     </textarea>
                 </section>
                 <section data-markdown data-separator="---" id="advanced">
                     <textarea data-template>
-                        ### 12 factor applications
-                        ---
-                        ### Alpine
+                        ### Advanced topics
+                        
+                        Note:
+                        By now you should all be drinking the container
+                        kool-aid.  But how can you take your Level 19 CLI
+                        Wizarding skills to the 20th level?
                         ---
                         ### Orchestration
+
+                        Many containers all working together in a coherent way.
+
+                        Examples:
+                        * GeoServer + PostGIS
+                        * NodeJS front-end webapp + Tomcat REST endpoint +
+                        Postgres data store
+                        * Tomcat serving Leaflet + MapProxy + RabbitMQ
+
+                        Note:
+                        Once you separate out your containers by
+                        responsibility, you can combine them in ways that make
+                        sense.  Maybe your development environment extends
+                        GeoServer and uses OSM data stored in PostGIS.  Perhaps
+                        you have a NodeJS webapp and want Tomcat and GDAL to
+                        handle some raster manipulation.  Maybe Tomcat serves out
+                        a Leaflet front end that you have added some custom
+                        functionality to create tile packages by sending jobs
+                        to a messaging server, which can get picked up by
+                        multiple instances of MapProxy.
                         ---
-                        ### Tips
+                        ### 12 factor applications
+
+                        * A dozen helpful considerations to keep in mind when making
+                        containers that scale
+                        * Some range from the obvious (use SCM, duh) to the
+                        kinda-scary (put your credentials in ENV variables)
+                        * Quick read: [12factor.net](https://12factor.net)
+
+                        Note:
+                        That brings me to my next point: we should really start
+                        to think about building scalable apps from the get-go.
+                        These might not all apply to the application you are
+                        building but I would urge you to at least keep them in
+                        the front of your mind when making a container you
+                        think might end up as a legit application.
+                        ---
+                        ### Alpine
+
+                        * Small footprint linux distribution, perfect for a
+                        production container
+                        * No, really, it is SUPER small (_Under 4MB_)
+                        * Based on Busybox (apk instead of apt)
+
+                        Note:
+
                         ---
                         ### Gripes &gt;_&lt;
                         
                         * Build environment containers typically run as _root_
                         which a linux host will honor
-                        * Passing credentials as environment variables is
-                        convenient but insecure, and solutions are complicated
-                        to implement
-                        Dockerfiles can and do get crazy if your build is
-                        equally crazy.  Some people prefer having one
-                        monolithic Dockerfile with no dependent scripts, which
-                        is completely understandable.  Others would rather a
-                        brief Dockerfile that pushes the heavy lifting to a
-                        shell script that gets maintained instead.
+                        * Containers can only run on like-platforms, i.e.,
+                        Windows-Windows, Linux-Linux
+                        * Windows containers are _getting there_...
+                        * ...but they still cause headaches with HyperV and
+                        other emulation platforms like Android
+
+                        Note:
+                        So I find it frustrating when I run my Java build in my
+                        build environment container and once it is done, I have
+                        a build directory full of files that belong to root.
+                        Windows hosts don't have that problem but I still won't
+                        switch, no offense.  If you want to run a Windows host
+                        on your linux machine, I am afraid you are out of luck
+                        unless you get spicy with a Virtualbox set up.  Windows
+                        can get around this problem because the Docker platform
+                        there uses Boot2Docker as a base image with Virtualbox,
+                        which is basically cheating.  Windows containers do
+                        exist but I have no experience there, if one among us
+                        here can speak to their usefulness, I would be eager to
+                        listen.  Even when you are on Windows, rocking a linux
+                        container, expect some headaches with virtualization
+                        bios settings even in modern hardware.  Android
+                        emulators don't place nice in the same sandbox.
+                    </textarea>
+                </section>
+                <section data-markdown data-separator="---" id="wrap-up">
+                    <textarea data-template>
+                        ### Questions?
+                        ---
+                        ### Thanks!
                     </textarea>
                 </section>
             </div>
