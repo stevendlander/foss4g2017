@@ -133,9 +133,9 @@
                         ```
 
                         Note:
-                        * Containers work well as build environments.  You might
-                        not even be aware they were working if you have ever
-                        used TravisCI on an open source project.
+                        * Containers work well as build environments.  If you
+                        have ever used TravisCI through GitHub, you have been
+                        using containers already.
                         * Your Dockerfile is a recipe on how to make the same
                         thing over and over exactly the same way, so it pays to
                         ensure specific versions of software are used instead
@@ -306,13 +306,13 @@
                         The ADD command can behave unexpectedly in some
                         instances, when you probably just wanted to simply add
                         a file to a container.  If that is your intent, use
-                        copy.  If you really did want local-only tarball
+                        copy.  If you really did want local-only tar file
                         extraction or remote URL support however, then by all
                         means, ADD away.
                         ---
                         ### Container creation (cont'd)
 
-                        * Use the FROM command to inherit from image that are
+                        * Use the FROM command to inherit from an image that is 
                         already useful, such as Tomcat, GDAL, PostGIS, etc
                         * Stick to one purpose per container, so scaling
                         becomes easier.  More on that later...
@@ -328,7 +328,7 @@
                         expect a new container to be able to pick up where you
                         last left off with the last one.  Unless you mount a
                         directory with state information, it won't work like
-                        you hope.
+                        you would hope.
                     </textarea>
                 </section>
                 <section data-markdown data-separator="---" id="advanced">
@@ -386,35 +386,65 @@
                         * Based on Busybox (apk instead of apt)
 
                         Note:
-
+                        To get the most efficiency out of your containerized
+                        applications, you want them to be as small as possible.
+                        This is where Alpine, a stripped down linux
+                        distribution, comes in.  Alpine is based on busybox, so
+                        it kinda-sorta acts like android linux.  Many official
+                        docker images such as Postgres, Tomcat, and Node, for
+                        example, also publish an alpine version of their
+                        releases so docker users downstream can use their
+                        images in production environments.
                         ---
                         ### Gripes &gt;_&lt;
                         
-                        * Build environment containers typically run as _root_
+                        Build environment containers typically run as _root_
                         which a linux host will honor
-                        * Containers can only run on like-platforms, i.e.,
-                        Windows-Windows, Linux-Linux
-                        * Windows containers are _getting there_...
-                        * ...but they still cause headaches with HyperV and
-                        other emulation platforms like Android
-
+                        
                         Note:
                         So I find it frustrating when I run my Java build in my
                         build environment container and once it is done, I have
                         a build directory full of files that belong to root.
-                        Windows hosts don't have that problem but I still won't
-                        switch, no offense.  If you want to run a Windows host
+                        This is because docker containers typically run as the
+                        root user.  Windows hosts don't have that problem but I
+                        still won't switch, no offense.
+                        ---
+                        ### Gripes &gt;_&lt; (cont'd)
+
+                        Containers can only run on like-platforms, i.e.,
+                        Windows-Windows, Linux-Linux
+
+                        Note:
+                        If you want to run a Windows host
                         on your linux machine, I am afraid you are out of luck
                         unless you get spicy with a Virtualbox set up.  Windows
                         can get around this problem because the Docker platform
-                        there uses Boot2Docker as a base image with Virtualbox,
-                        which is basically cheating.  Windows containers do
-                        exist but I have no experience there, if one among us
-                        here can speak to their usefulness, I would be eager to
-                        listen.  Even when you are on Windows, rocking a linux
+                        there uses Boot2Docker as a base image with Virtualbox.
+                        ---
+                        ### Gripes &gt;_&lt; (cont'd)
+
+                        Windows containers are _getting there_...
+
+                        Note:
+                        Windows containers do exist but I admit to having
+                        little experience with them.  As far as using them for
+                        Windows builds or continuous integration, I can't say
+                        they would substantial benefit over a Jenkins machine
+                        running your builds.
+                        ---
+                        ### Gripes &gt;_&lt; (cont'd)
+
+                        ...but they still cause headaches with HyperV and
+                        other emulation platforms like Android when your host
+                        is Windows
+
+                        Note:
+                        Even when you are on Windows, rocking a linux
                         container, expect some headaches with virtualization
                         bios settings even in modern hardware.  Android
-                        emulators don't place nice in the same sandbox.
+                        emulators don't place nice in the same sandbox. My
+                        coworkers have switched to linux on their laptops to
+                        avoid this issue.
                     </textarea>
                 </section>
                 <section data-markdown data-separator="---" id="wrap-up">
@@ -441,6 +471,10 @@
                     { src: 'plugin/notes/notes.js', async: true },
                     { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
                 ]
+            });
+            Reveal.configure({
+                slideNumber: true,
+                controls: false
             });
         </script>
     </body>
